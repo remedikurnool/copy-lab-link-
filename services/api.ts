@@ -57,14 +57,14 @@ export const api = {
 
   // ---------- LAB DATA (CPT + ACF) ----------
   getLabTests: async () => {
-    if (!isApiConfigured) return []; // Return empty to trigger mock data fallback in store
+    if (!isApiConfigured) return []; 
 
     try {
       const res = await fetch(`${WP_API}/wp/v2/lab_test?per_page=100`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       return await res.json();
     } catch (e) {
-      console.warn("Fetch Tests Error:", e); // Warn instead of Error to be less alarming
+      console.warn("Fetch Tests Error:", e);
       return [];
     }
   },
@@ -95,6 +95,20 @@ export const api = {
     }
   },
 
+  getDoctors: async () => {
+    if (!isApiConfigured) return [];
+
+    try {
+      // Assuming 'doctor' is the slug for the CPT
+      const res = await fetch(`${WP_API}/wp/v2/doctor?per_page=100`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      console.warn("Fetch Doctors Error:", e);
+      return [];
+    }
+  },
+
   // ---------- WOOCOMMERCE ----------
   getProducts: async () => {
     if (!isApiConfigured) return [];
@@ -107,6 +121,21 @@ export const api = {
       return await res.json();
     } catch(e) {
       console.warn("Fetch Products Error:", e);
+      return [];
+    }
+  },
+
+  getUserOrders: async (customerId: number) => {
+    if (!isApiConfigured) return [];
+    
+    try {
+      const res = await fetch(
+        `${WP_API}/wc/v3/orders?customer=${customerId}&consumer_key=${WC_KEY}&consumer_secret=${WC_SECRET}`
+      );
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      return await res.json();
+    } catch(e) {
+      console.warn("Fetch Orders Error:", e);
       return [];
     }
   },

@@ -20,6 +20,7 @@ interface AppState {
   user: UserDetails;
   updateUser: (details: Partial<UserDetails>) => void;
   orders: Order[];
+  fetchUserOrders: () => Promise<void>;
   addOrder: (order: Order) => void;
 
   // B2B Auth (Partner Context)
@@ -43,20 +44,22 @@ interface AppState {
 }
 
 // Helper to map WP API response to TestItem
-const mapWPDataToTestItem = (item: any, type: 'test' | 'scan' | 'package'): TestItem => {
-  // Default values if ACF fields are missing
-  const price = item.acf?.price ? Number(item.acf.price) : 1000;
-  const mrp = item.acf?.mrp ? Number(item.acf.mrp) : Math.round(price * 1.2);
+const mapWPDataToTestItem = (item: any, type: 'test' | 'scan' | 'package' | 'doctor'): TestItem => {
+  // ACF Fields
+  const acf = item.acf || {};
+  
+  const price = acf.price ? Number(acf.price) : 1000;
+  const mrp = acf.mrp ? Number(acf.mrp) : Math.round(price * 1.2);
   
   const defaultCenter: CenterPrice = {
-    centerName: 'Main Lab',
+    centerName: type === 'doctor' ? (acf.clinic_name || 'Main Clinic') : 'Main Lab',
     price: price,
     mrp: mrp,
     rating: 4.8,
     reviews: 120,
     accredited: true,
-    tat: item.acf?.report_time || '24 Hours',
-    location: 'Central'
+    tat: acf.report_time || (type === 'doctor' ? 'N/A' : '24 Hours'),
+    location: acf.location || 'Central'
   };
 
   // Strip HTML from description
@@ -64,19 +67,24 @@ const mapWPDataToTestItem = (item: any, type: 'test' | 'scan' | 'package'): Test
 
   return {
     id: item.id.toString(),
-    name: item.title?.rendered || 'Unknown Test',
+    name: item.title?.rendered || 'Unknown Item',
     type: type,
-    category: item.acf?.category || (type === 'scan' ? 'Scans' : 'General'), // Fallback category
+    category: acf.category || (type === 'scan' ? 'Scans' : type === 'package' ? 'Packages' : type === 'doctor' ? 'General Physician' : 'General'),
     description: description,
     shortDescription: item.excerpt?.rendered?.replace(/<[^>]+>/g, '') || description.substring(0, 100),
-    preparation: item.acf?.preparation || 'No specific preparation',
-    sampleType: item.acf?.sample_type || 'N/A',
-    reportTime: item.acf?.report_time || '24 Hours',
-    parametersCount: 1, // Default
-    imageUrl: item.acf?.image_url || 'https://picsum.photos/400/200',
+    preparation: acf.preparation || 'No specific preparation',
+    sampleType: acf.sample_type || 'N/A',
+    reportTime: acf.report_time || '24 Hours',
+    parametersCount: 1, 
+    imageUrl: acf.image_url || 'https://picsum.photos/400/200',
     centers: [defaultCenter],
     isNabl: true,
-    tags: []
+    tags: [],
+    
+    // Doctor Specific
+    specialty: acf.specialty || '',
+    experience: acf.experience || '',
+    about: acf.about || description
   };
 };
 
@@ -106,7 +114,7 @@ export const useStore = create<AppState>()(
              api.getPackages()
           ]);
 
-          // Check if real API returned data, otherwise fall back to mock (so app doesn't break if API is down/empty)
+          // Check if real API returned data, otherwise fall back to mock
           if ((!labTests || labTests.length === 0) && (!scans || scans.length === 0)) {
              console.warn("API returned empty data, using MOCK data.");
              set({ tests: MOCK_TESTS, isLoading: false });
@@ -121,13 +129,21 @@ export const useStore = create<AppState>()(
 
         } catch (error) {
           console.error("Failed to fetch data", error);
-          set({ tests: MOCK_TESTS, isLoading: false }); // Fallback
+          set({ tests: MOCK_TESTS, isLoading: false }); 
         }
       },
       fetchDoctors: async () => {
-          if (get().doctors.length === 0) {
-              set({ doctors: MOCK_DOCTORS });
-          }
+        try {
+            const doctors = await api.getDoctors();
+            if (doctors && doctors.length > 0) {
+                 const mappedDoctors = doctors.map((d: any) => mapWPDataToTestItem(d, 'doctor'));
+                 set({ doctors: mappedDoctors });
+            } else {
+                 set({ doctors: MOCK_DOCTORS });
+            }
+        } catch (e) {
+            set({ doctors: MOCK_DOCTORS });
+        }
       },
 
       user: {
@@ -143,13 +159,53 @@ export const useStore = create<AppState>()(
       
       orders: [],
       addOrder: (order) => set((state) => ({ orders: [order, ...state.orders] })),
+      fetchUserOrders: async () => {
+          const { b2bUser } = get();
+          if (!b2bUser?.id) return;
+          
+          try {
+              const wcOrders = await api.getUserOrders(Number(b2bUser.id));
+              if (wcOrders && Array.isArray(wcOrders)) {
+                  // Map WC Orders to App Orders
+                  const mappedOrders: Order[] = wcOrders.map((o: any) => ({
+                      id: o.id.toString(),
+                      date: o.date_created,
+                      totalAmount: Number(o.total),
+                      status: o.status.charAt(0).toUpperCase() + o.status.slice(1),
+                      userDetails: get().user, // Keeping current user details as placeholder since WC might not return full details easily in list
+                      items: o.line_items.map((li: any) => ({
+                          id: li.product_id.toString(),
+                          name: li.name,
+                          type: 'test', // fallback
+                          category: 'Ordered',
+                          description: '',
+                          selectedCenter: {
+                              centerName: 'Lab Link',
+                              price: Number(li.total),
+                              mrp: Number(li.total),
+                              rating: 5,
+                              reviews: 0,
+                              accredited: true,
+                              tat: '24h'
+                          },
+                          centers: [],
+                          isNabl: true,
+                          cartId: li.id.toString()
+                      }))
+                  }));
+                  set({ orders: mappedOrders });
+              }
+          } catch (e) {
+              console.error("Failed to fetch orders", e);
+          }
+      },
 
       // B2B Auth Logic
       b2bUser: null,
       loginB2B: (user: B2BUser) => {
          set({ b2bUser: user });
       },
-      logoutB2B: () => set({ b2bUser: null }),
+      logoutB2B: () => set({ b2bUser: null, orders: [] }),
 
       cart: [],
       addToCart: (item, centerIndex, slotDate, slotTime) => set((state) => {
@@ -157,6 +213,7 @@ export const useStore = create<AppState>()(
         
         const newItem: CartItem = { 
             ...item, 
+            cartId: cartItemId,
             selectedCenter: item.centers[centerIndex],
             appointmentDate: slotDate,
             appointmentSlot: slotTime

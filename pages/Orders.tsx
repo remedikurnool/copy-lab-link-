@@ -1,17 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
-  const { orders } = useStore();
+  const { orders, fetchUserOrders, b2bUser } = useStore();
+
+  useEffect(() => {
+    if (b2bUser) {
+        fetchUserOrders();
+    }
+  }, [b2bUser]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-      case 'Confirmed': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-      case 'Completed': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'Processing': return 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'On-hold': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+      case 'Completed': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
       case 'Cancelled': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+      case 'Failed': return 'bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-400';
       default: return 'bg-gray-100 text-gray-700';
     }
   };
@@ -54,9 +62,9 @@ const Orders: React.FC = () => {
                         <div key={idx} className="flex justify-between items-center text-sm">
                              <div className="flex flex-col">
                                 <span className="text-text-main dark:text-gray-200 font-medium">{item.name}</span>
-                                <span className="text-[10px] text-gray-500">{item.selectedCenter.centerName}</span>
+                                <span className="text-[10px] text-gray-500">{item.selectedCenter?.centerName || 'Lab Link'}</span>
                              </div>
-                             <span className="text-gray-600 dark:text-gray-400">₹{item.selectedCenter.price}</span>
+                             <span className="text-gray-600 dark:text-gray-400">₹{item.selectedCenter?.price || 0}</span>
                         </div>
                     ))}
                 </div>
