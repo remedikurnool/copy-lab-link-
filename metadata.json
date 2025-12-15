@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Lab Link",
+  "description": "A comprehensive diagnostics booking platform integrated with Google Sheets and WhatsApp.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
