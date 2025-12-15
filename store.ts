@@ -108,24 +108,31 @@ export const useStore = create<AppState>()(
         set({ isLoading: true });
         
         try {
-          const [labTests, scans, packages] = await Promise.all([
-             api.getLabTests(),
+          const [testsData, scansData, packagesData, checkupsData] = await Promise.all([
+             api.getTests(),
              api.getScans(),
-             api.getPackages()
+             api.getPackages(),
+             api.getCheckups()
           ]);
 
+          const hasData = (testsData && testsData.length > 0) || 
+                          (scansData && scansData.length > 0) || 
+                          (packagesData && packagesData.length > 0) ||
+                          (checkupsData && checkupsData.length > 0);
+
           // Check if real API returned data, otherwise fall back to mock
-          if ((!labTests || labTests.length === 0) && (!scans || scans.length === 0)) {
+          if (!hasData) {
              console.warn("API returned empty data, using MOCK data.");
              set({ tests: MOCK_TESTS, isLoading: false });
              return;
           }
 
-          const mappedTests = Array.isArray(labTests) ? labTests.map((t: any) => mapWPDataToTestItem(t, 'test')) : [];
-          const mappedScans = Array.isArray(scans) ? scans.map((s: any) => mapWPDataToTestItem(s, 'scan')) : [];
-          const mappedPackages = Array.isArray(packages) ? packages.map((p: any) => mapWPDataToTestItem(p, 'package')) : [];
+          const mappedTests = Array.isArray(testsData) ? testsData.map((t: any) => mapWPDataToTestItem(t, 'test')) : [];
+          const mappedScans = Array.isArray(scansData) ? scansData.map((s: any) => mapWPDataToTestItem(s, 'scan')) : [];
+          const mappedPackages = Array.isArray(packagesData) ? packagesData.map((p: any) => mapWPDataToTestItem(p, 'package')) : [];
+          const mappedCheckups = Array.isArray(checkupsData) ? checkupsData.map((c: any) => mapWPDataToTestItem(c, 'package')) : [];
 
-          set({ tests: [...mappedTests, ...mappedScans, ...mappedPackages], isLoading: false });
+          set({ tests: [...mappedTests, ...mappedScans, ...mappedPackages, ...mappedCheckups], isLoading: false });
 
         } catch (error) {
           console.error("Failed to fetch data", error);

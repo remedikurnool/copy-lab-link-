@@ -1,12 +1,13 @@
 // WP/WC API Configuration
 // Cast import.meta to any to avoid Property 'env' does not exist on type 'ImportMeta'
 const env = (import.meta as any).env || {};
-const WP_API = env.VITE_WP_API || 'https://your-wordpress-site.com/wp-json'; // Fallback for dev
+// Prioritize VITE_WP_API_BASE, fallback to VITE_WP_API
+const WP_API_BASE = env.VITE_WP_API_BASE || env.VITE_WP_API || 'https://your-wordpress-site.com/wp-json'; 
 const WC_KEY = env.VITE_WC_KEY || '';
 const WC_SECRET = env.VITE_WC_SECRET || '';
 
 // Check if API is properly configured
-const isApiConfigured = WP_API !== 'https://your-wordpress-site.com/wp-json';
+const isApiConfigured = WP_API_BASE !== 'https://your-wordpress-site.com/wp-json';
 
 export const api = {
   // ---------- AUTH ----------
@@ -28,7 +29,7 @@ export const api = {
     }
 
     try {
-      const res = await fetch(`${WP_API}/jwt-auth/v1/token`, {
+      const res = await fetch(`${WP_API_BASE}/jwt-auth/v1/token`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
@@ -44,7 +45,7 @@ export const api = {
     if (!isApiConfigured) return { id: 1, name: 'Demo User', email: 'demo@lablink.com' };
 
     try {
-      const res = await fetch(`${WP_API}/wp/v2/users/me`, {
+      const res = await fetch(`${WP_API_BASE}/wp/v2/users/me`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -55,12 +56,12 @@ export const api = {
     }
   },
 
-  // ---------- LAB DATA (CPT + ACF) ----------
-  getLabTests: async () => {
+  // ---------- LAB DATA (Correct CPT Slugs) ----------
+  getTests: async () => {
     if (!isApiConfigured) return []; 
 
     try {
-      const res = await fetch(`${WP_API}/wp/v2/lab_test?per_page=100`);
+      const res = await fetch(`${WP_API_BASE}/wp/v2/tests?per_page=100`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       return await res.json();
     } catch (e) {
@@ -73,7 +74,7 @@ export const api = {
     if (!isApiConfigured) return [];
 
     try {
-      const res = await fetch(`${WP_API}/wp/v2/scan?per_page=100`);
+      const res = await fetch(`${WP_API_BASE}/wp/v2/scans?per_page=100`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       return await res.json();
     } catch (e) {
@@ -86,7 +87,7 @@ export const api = {
     if (!isApiConfigured) return [];
 
     try {
-      const res = await fetch(`${WP_API}/wp/v2/lab_package?per_page=100`);
+      const res = await fetch(`${WP_API_BASE}/wp/v2/packages?per_page=100`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       return await res.json();
     } catch (e) {
@@ -95,12 +96,24 @@ export const api = {
     }
   },
 
+  getCheckups: async () => {
+    if (!isApiConfigured) return [];
+
+    try {
+      const res = await fetch(`${WP_API_BASE}/wp/v2/checkups?per_page=100`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      console.warn("Fetch Checkups Error:", e);
+      return [];
+    }
+  },
+
   getDoctors: async () => {
     if (!isApiConfigured) return [];
 
     try {
-      // Assuming 'doctor' is the slug for the CPT
-      const res = await fetch(`${WP_API}/wp/v2/doctor?per_page=100`);
+      const res = await fetch(`${WP_API_BASE}/wp/v2/doctor?per_page=100`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       return await res.json();
     } catch (e) {
@@ -115,7 +128,7 @@ export const api = {
 
     try {
       const res = await fetch(
-        `${WP_API}/wc/v3/products?consumer_key=${WC_KEY}&consumer_secret=${WC_SECRET}`
+        `${WP_API_BASE}/wc/v3/products?consumer_key=${WC_KEY}&consumer_secret=${WC_SECRET}`
       );
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       return await res.json();
@@ -130,7 +143,7 @@ export const api = {
     
     try {
       const res = await fetch(
-        `${WP_API}/wc/v3/orders?customer=${customerId}&consumer_key=${WC_KEY}&consumer_secret=${WC_SECRET}`
+        `${WP_API_BASE}/wc/v3/orders?customer=${customerId}&consumer_key=${WC_KEY}&consumer_secret=${WC_SECRET}`
       );
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       return await res.json();
@@ -148,7 +161,7 @@ export const api = {
     }
 
     try {
-      const res = await fetch(`${WP_API}/wc/v3/orders`, {
+      const res = await fetch(`${WP_API_BASE}/wc/v3/orders`, {
         method: "POST",
         headers: {
           "Authorization": "Basic " + btoa(`${WC_KEY}:${WC_SECRET}`),
