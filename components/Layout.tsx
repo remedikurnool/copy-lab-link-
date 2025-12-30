@@ -4,7 +4,7 @@ import { useStore } from '../store';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { pathname } = useLocation();
-  const { cart } = useStore();
+  const { cart, toasts, removeToast } = useStore();
   
   // Whitelist approach: Only show bottom nav on these main tabs
   const mainTabs = ['/', '/explore', '/cart', '/profile'];
@@ -19,6 +19,30 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   return (
     <div className="h-[100dvh] w-full md:max-w-md md:mx-auto relative flex flex-col md:shadow-2xl md:my-4 md:h-[95vh] md:rounded-[3rem] overflow-hidden bg-transparent">
+      {/* Toast Notifications */}
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[350px] flex flex-col gap-2 pointer-events-none">
+        {toasts.map((toast) => (
+          <div 
+            key={toast.id}
+            className={`pointer-events-auto p-4 rounded-2xl shadow-float flex items-center gap-3 animate-slide-up border backdrop-blur-md ${
+              toast.type === 'error' 
+                ? 'bg-red-500/90 text-white border-red-400' 
+                : toast.type === 'success' 
+                ? 'bg-green-500/90 text-white border-green-400'
+                : 'bg-white/90 dark:bg-surface-dark/90 text-text-main dark:text-white border-gray-100 dark:border-white/10'
+            }`}
+          >
+            <span className="material-symbols-rounded text-xl">
+              {toast.type === 'error' ? 'error' : toast.type === 'success' ? 'check_circle' : 'info'}
+            </span>
+            <p className="text-sm font-bold flex-1">{toast.message}</p>
+            <button onClick={() => removeToast(toast.id)} className="opacity-70 hover:opacity-100">
+              <span className="material-symbols-rounded text-sm">close</span>
+            </button>
+          </div>
+        ))}
+      </div>
+
       {/* Main Content Area */}
       <div className="flex-1 w-full overflow-hidden relative">
         {children}

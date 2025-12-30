@@ -4,19 +4,23 @@ import { CartItem, TestItem, Coupon, UserDetails, Order, B2BUser, CenterPrice, P
 import { MOCK_TESTS, MOCK_COUPONS, MOCK_DOCTORS } from './data';
 import { api } from './services/api';
 
+interface Toast {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
+
 interface AppState {
-  // Theme
   darkMode: boolean;
   toggleDarkMode: () => void;
-
-  // Data
+  toasts: Toast[];
+  addToast: (message: string, type?: Toast['type']) => void;
+  removeToast: (id: string) => void;
   tests: TestItem[];
   doctors: TestItem[];
   isLoading: boolean;
   fetchTests: () => Promise<void>;
   fetchDoctors: () => Promise<void>;
-
-  // User & Orders (Patient Context)
   user: UserDetails;
   updateUser: (details: Partial<UserDetails>) => void;
   patients: Patient[];
@@ -25,28 +29,19 @@ interface AppState {
   orders: Order[];
   fetchUserOrders: () => Promise<void>;
   addOrder: (order: Order) => void;
-
-  // B2B Auth (Partner Context)
   b2bUser: B2BUser | null;
   loginB2B: (user: B2BUser) => void;
   logoutB2B: () => void;
-
-  // Cart
   cart: CartItem[];
   addToCart: (item: TestItem, centerIndex: number, slotDate?: string, slotTime?: string) => void;
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
-  
-  // Coupon
   appliedCoupon: Coupon | null;
-  applyCoupon: (code: string) => string | null; // Returns error message or null if success
+  applyCoupon: (code: string) => string | null;
   removeCoupon: () => void;
-
-  // Calculated
   getCartTotal: () => { subtotal: number; discount: number; finalTotal: number };
 }
 
-// Helper to map WP API response to TestItem
 const mapWPDataToTestItem = (item: any, type: 'test' | 'scan' | 'package' | 'doctor'): TestItem => {
   const acf = item.acf || {};
   const price = acf.price ? Number(acf.price) : 1000;
@@ -95,7 +90,13 @@ export const useStore = create<AppState>()(
           return { darkMode: newMode };
         });
       },
-
+      toasts: [],
+      addToast: (message, type = 'info') => {
+        const id = Math.random().toString(36).substring(2, 9);
+        set((state) => ({ toasts: [...state.toasts, { id, message, type }] }));
+        setTimeout(() => get().removeToast(id), 4000);
+      },
+      removeToast: (id) => set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) })),
       tests: [],
       doctors: [],
       isLoading: false,
@@ -108,17 +109,19 @@ export const useStore = create<AppState>()(
              api.getPackages(),
              api.getCheckups()
           ]);
-          const hasData = (testsData && testsData.length > 0) || (scansData && scansData.length > 0) || (packagesData && packagesData.length > 0) || (checkupsData && checkupsData.length > 0);
-          if (!hasData) {
-             set({ tests: MOCK_TESTS, isLoading: false });
-             return;
+          const combined = [
+            ...(Array.isArray(testsData) ? testsData.map(t => mapWPDataToTestItem(t, 'test')) : []),
+            ...(Array.isArray(scansData) ? scansData.map(s => mapWPDataToTestItem(s, 'scan')) : []),
+            ...(Array.isArray(packagesData) ? packagesData.map(p => mapWPDataToTestItem(p, 'package')) : []),
+            ...(Array.isArray(checkupsData) ? checkupsData.map(c => mapWPDataToTestItem(c, 'package')) : [])
+          ];
+          if (combined.length === 0) {
+            set({ tests: MOCK_TESTS, isLoading: false });
+          } else {
+            set({ tests: combined, isLoading: false });
           }
-          const mappedTests = Array.isArray(testsData) ? testsData.map((t: any) => mapWPDataToTestItem(t, 'test')) : [];
-          const mappedScans = Array.isArray(scansData) ? scansData.map((s: any) => mapWPDataToTestItem(s, 'scan')) : [];
-          const mappedPackages = Array.isArray(packagesData) ? packagesData.map((p: any) => mapWPDataToTestItem(p, 'package')) : [];
-          const mappedCheckups = Array.isArray(checkupsData) ? checkupsData.map((c: any) => mapWPDataToTestItem(c, 'package')) : [];
-          set({ tests: [...mappedTests, ...mappedScans, ...mappedPackages, ...mappedCheckups], isLoading: false });
         } catch (error) {
+          get().addToast("Could not sync latest tests. Loading offline data.", "error");
           set({ tests: MOCK_TESTS, isLoading: false }); 
         }
       },
@@ -126,16 +129,15 @@ export const useStore = create<AppState>()(
         try {
             const doctors = await api.getDoctors();
             if (doctors && doctors.length > 0) {
-                 const mappedDoctors = doctors.map((d: any) => mapWPDataToTestItem(d, 'doctor'));
-                 set({ doctors: mappedDoctors });
+                 set({ doctors: doctors.map(d => mapWPDataToTestItem(d, 'doctor')) });
             } else {
                  set({ doctors: MOCK_DOCTORS });
             }
         } catch (e) {
+            get().addToast("Doctor directory offline. Showing local cache.", "info");
             set({ doctors: MOCK_DOCTORS });
         }
       },
-
       user: {
         fullName: '',
         age: '',
@@ -146,11 +148,15 @@ export const useStore = create<AppState>()(
         timeSlot: 'morning'
       },
       updateUser: (details) => set((state) => ({ user: { ...state.user, ...details } })),
-      
       patients: [],
-      addPatient: (patient) => set((state) => ({ patients: [patient, ...state.patients] })),
-      removePatient: (id) => set((state) => ({ patients: state.patients.filter(p => p.id !== id) })),
-
+      addPatient: (patient) => {
+        set((state) => ({ patients: [patient, ...state.patients] }));
+        get().addToast(`${patient.fullName} added to patients.`, "success");
+      },
+      removePatient: (id) => {
+        set((state) => ({ patients: state.patients.filter(p => p.id !== id) }));
+        get().addToast("Patient profile removed.", "info");
+      },
       orders: [],
       addOrder: (order) => set((state) => ({ orders: [order, ...state.orders] })),
       fetchUserOrders: async () => {
@@ -188,14 +194,18 @@ export const useStore = create<AppState>()(
                   set({ orders: mappedOrders });
               }
           } catch (e) {
-              console.error("Failed to fetch orders", e);
+              get().addToast("Failed to sync booking history.", "error");
           }
       },
-
       b2bUser: null,
-      loginB2B: (user: B2BUser) => set({ b2bUser: user }),
-      logoutB2B: () => set({ b2bUser: null, orders: [] }),
-
+      loginB2B: (user: B2BUser) => {
+        set({ b2bUser: user });
+        get().addToast(`Logged in as ${user.name}`, "success");
+      },
+      logoutB2B: () => {
+        set({ b2bUser: null, orders: [] });
+        get().addToast("Logged out successfully.", "info");
+      },
       cart: [],
       addToCart: (item, centerIndex, slotDate, slotTime) => set((state) => {
         const cartItemId = `${item.id}-${centerIndex}`;
@@ -207,6 +217,7 @@ export const useStore = create<AppState>()(
             appointmentSlot: slotTime
         };
         const existingIndex = state.cart.findIndex(i => i.id === item.id);
+        get().addToast(`${item.name} added to cart`, "success");
         if (existingIndex >= 0) {
            const updatedCart = [...state.cart];
            updatedCart[existingIndex] = newItem;
@@ -214,35 +225,31 @@ export const useStore = create<AppState>()(
         }
         return { cart: [...state.cart, newItem] };
       }),
-      removeFromCart: (itemId) => set((state) => ({ 
-        cart: state.cart.filter(i => i.id !== itemId) 
-      })),
+      removeFromCart: (itemId) => set((state) => {
+        const itemToRemove = state.cart.find(i => i.id === itemId);
+        if (itemToRemove) get().addToast(`${itemToRemove.name} removed.`, "info");
+        return { cart: state.cart.filter(i => i.id !== itemId) };
+      }),
       clearCart: () => set({ cart: [], appliedCoupon: null }),
-
       appliedCoupon: null,
       applyCoupon: (code) => {
         const coupon = MOCK_COUPONS.find(c => c.code === code.toUpperCase());
         const { subtotal } = get().getCartTotal();
         if (!coupon) return 'Invalid coupon code';
-        if (subtotal < coupon.minOrderValue) return `Minimum order value of ₹${coupon.minOrderValue} required`;
+        if (subtotal < coupon.minOrderValue) return `Min order of ₹${coupon.minOrderValue} required`;
         set({ appliedCoupon: coupon });
+        get().addToast("Coupon applied!", "success");
         return null;
       },
       removeCoupon: () => set({ appliedCoupon: null }),
-
       getCartTotal: () => {
         const { cart, appliedCoupon } = get();
         const subtotal = cart.reduce((sum, item) => sum + item.selectedCenter.price, 0);
         let discount = 0;
         if (appliedCoupon) {
-          if (appliedCoupon.discountType === 'percent') {
-            discount = (subtotal * appliedCoupon.value) / 100;
-          } else {
-            discount = appliedCoupon.value;
-          }
+          discount = appliedCoupon.discountType === 'percent' ? (subtotal * appliedCoupon.value) / 100 : appliedCoupon.value;
         }
-        const finalTotal = Math.max(0, subtotal - discount);
-        return { subtotal, discount, finalTotal };
+        return { subtotal, discount, finalTotal: Math.max(0, subtotal - discount) };
       }
     }),
     {

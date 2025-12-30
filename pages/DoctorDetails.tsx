@@ -26,7 +26,7 @@ const DoctorDetails: React.FC = () => {
   const timeSlots = ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM'];
 
   return (
-    <div className="h-full flex flex-col w-full bg-background-light dark:bg-background-dark">
+    <div className="h-full flex flex-col w-full bg-background-light dark:bg-background-dark relative">
       {/* Header */}
       <header className="sticky top-0 z-50 flex items-center justify-between p-4 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md shrink-0">
         <button onClick={() => navigate(-1)} className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-surface-dark transition-colors">
@@ -38,7 +38,7 @@ const DoctorDetails: React.FC = () => {
         </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar pb-28">
+      <div className="flex-1 overflow-y-auto hide-scrollbar pb-40">
          {/* Profile Card */}
          <div className="px-4">
             <div className="bg-white dark:bg-surface-dark rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center">
@@ -135,8 +135,8 @@ const DoctorDetails: React.FC = () => {
       </div>
 
       {/* Footer CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-background-dark border-t border-gray-100 dark:border-gray-800 shadow-soft max-w-md mx-auto z-50">
-          <div className="flex items-center justify-between gap-4">
+      <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 bg-white dark:bg-background-dark border-t border-gray-100 dark:border-gray-800 shadow-soft z-50">
+          <div className="flex items-center justify-between gap-4 max-w-lg mx-auto">
               <div className="flex flex-col">
                   <span className="text-xs text-gray-500">Consultation Fee</span>
                   <span className="text-xl font-extrabold text-text-main dark:text-white">₹{doc.centers[selectedCenterIdx].price}</span>

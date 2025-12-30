@@ -16,8 +16,16 @@ const Cart: React.FC = () => {
     if (!error) setCouponInput('');
   };
 
+  const navigateToItemDetails = (item: any) => {
+    if (item.type === 'doctor') {
+      navigate(`/doctor/${item.id}`);
+    } else {
+      navigate(`/details/${item.id}`);
+    }
+  };
+
   return (
-    <div className="h-full flex flex-col w-full bg-background-light dark:bg-background-dark">
+    <div className="h-full flex flex-col w-full bg-background-light dark:bg-background-dark relative">
       {/* App Bar */}
       <div className="shrink-0 z-20 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center p-4 justify-between h-16">
@@ -28,7 +36,7 @@ const Cart: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-32">
+      <div className="flex-1 overflow-y-auto pb-40 hide-scrollbar">
         {/* Safety Banner */}
         <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 flex items-center justify-center gap-2">
           <span className="material-symbols-rounded text-blue-600 dark:text-blue-400 text-[18px]">verified_user</span>
@@ -38,8 +46,8 @@ const Cart: React.FC = () => {
         {cart.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <span className="material-symbols-rounded text-6xl text-gray-300">shopping_cart_off</span>
-            <p className="text-gray-500">Your cart is empty</p>
-            <button onClick={() => navigate('/explore')} className="bg-primary px-6 py-2 rounded-full font-bold text-text-main">Browse Tests</button>
+            <p className="text-gray-500 font-medium">Your cart is empty</p>
+            <button onClick={() => navigate('/explore')} className="bg-primary px-8 py-3 rounded-full font-bold text-white shadow-lg shadow-primary/20">Browse Tests</button>
           </div>
         ) : (
           <>
@@ -48,12 +56,20 @@ const Cart: React.FC = () => {
               <div key={item.cartId} className="flex flex-col gap-4 p-4 border-b border-gray-100 dark:border-gray-800/50">
                 <div className="flex gap-4 justify-between">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className="bg-gray-100 rounded-2xl size-[72px] shrink-0 border border-gray-100 dark:border-gray-800 overflow-hidden">
+                    <div 
+                      onClick={() => navigateToItemDetails(item)}
+                      className="bg-gray-100 rounded-2xl size-[72px] shrink-0 border border-gray-100 dark:border-gray-800 overflow-hidden cursor-pointer active:scale-95 transition-transform"
+                    >
                        <img src={item.imageUrl || "https://picsum.photos/100"} alt="test" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex flex-1 flex-col justify-center gap-1">
                       <div className="flex justify-between items-start">
-                        <h3 className="text-text-main dark:text-white text-base font-bold leading-tight">{item.name}</h3>
+                        <h3 
+                          onClick={() => navigateToItemDetails(item)}
+                          className="text-text-main dark:text-white text-base font-bold leading-tight cursor-pointer hover:text-primary transition-colors"
+                        >
+                          {item.name}
+                        </h3>
                         <button onClick={() => removeFromCart(item.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
                           <span className="material-symbols-rounded text-[20px]">delete</span>
                         </button>
@@ -141,15 +157,15 @@ const Cart: React.FC = () => {
         )}
       </div>
 
-      {/* Sticky Footer */}
+      {/* Absolute Footer Bar */}
       {cart.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-background-dark border-t border-gray-100 dark:border-gray-800 shadow-soft max-w-md mx-auto z-30">
-          <div className="flex items-center gap-4">
+        <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 bg-white dark:bg-background-dark border-t border-gray-100 dark:border-gray-800 shadow-soft z-30">
+          <div className="flex items-center gap-4 max-w-lg mx-auto">
             <div className="flex flex-col">
               <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Total to Pay</span>
               <span className="text-xl font-extrabold text-text-main dark:text-white leading-none">₹{finalTotal}</span>
             </div>
-            <button onClick={() => navigate('/checkout')} className="flex-1 bg-primary hover:bg-primary-dark text-text-main h-14 rounded-full font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
+            <button onClick={() => navigate('/checkout')} className="flex-1 bg-primary hover:bg-primary-dark text-text-main h-14 rounded-full font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-primary/25 transition-transform active:scale-95">
                Select Address & Pay <span className="material-symbols-rounded text-[20px]">arrow_forward</span>
             </button>
           </div>

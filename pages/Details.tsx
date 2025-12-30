@@ -45,7 +45,7 @@ const Details: React.FC = () => {
       </div>
 
       {/* Content Sheet - Overlaps the image */}
-      <div className="flex-1 bg-white dark:bg-background-dark -mt-8 rounded-t-[2rem] relative z-20 overflow-y-auto hide-scrollbar pb-32 animate-slide-up">
+      <div className="flex-1 bg-white dark:bg-background-dark -mt-8 rounded-t-[2rem] relative z-20 overflow-y-auto hide-scrollbar pb-40 animate-slide-up">
          <div className="flex justify-center pt-3 pb-1">
             <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
          </div>

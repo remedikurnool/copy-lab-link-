@@ -6,13 +6,13 @@ import { api } from '../services/api';
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
-  const { cart, getCartTotal, clearCart, user, updateUser, addOrder, patients } = useStore();
+  const { cart, getCartTotal, clearCart, user, updateUser, addOrder, patients, addToast } = useStore();
   const { finalTotal } = getCartTotal();
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (cart.length === 0) {
-      navigate('/cart');
+      navigate('/cart', { replace: true });
     }
   }, [cart, navigate]);
 
@@ -28,15 +28,16 @@ const Checkout: React.FC = () => {
       gender: p.gender,
       address: p.address || user.address
     });
+    addToast(`Patient ${p.fullName.split(' ')[0]} selected`, 'info');
   };
 
   const handlePlaceOrder = async () => {
     if (!user.fullName || !user.phone) {
-        alert("Please enter Name and Phone");
+        addToast("Please enter Name and Phone", "error");
         return;
     }
     if (user.serviceType === 'home' && !user.address) {
-        alert("Please enter your full address for Home Collection.");
+        addToast("Please enter your full address for Home Collection.", "error");
         return;
     }
 
@@ -77,30 +78,36 @@ const Checkout: React.FC = () => {
         ]
     };
 
-    const response = await api.createOrder(orderPayload);
-    if (response.id) {
-        const newOrder: Order = {
-            id: response.id.toString(),
-            date: new Date().toISOString(),
-            items: [...cart],
-            totalAmount: finalTotal,
-            status: 'Pending',
-            userDetails: user
-        };
-        addOrder(newOrder);
-        clearCart();
-        alert(`Order Placed Successfully! Order ID: ${response.id}`);
-        navigate('/orders');
-    } else {
-        alert("Failed to place order: " + (response.message || "Unknown error"));
+    try {
+        const response = await api.createOrder(orderPayload);
+        if (response.id) {
+            const newOrder: Order = {
+                id: response.id.toString(),
+                date: new Date().toISOString(),
+                items: [...cart],
+                totalAmount: finalTotal,
+                status: 'Pending',
+                userDetails: { ...user }
+            };
+            addOrder(newOrder);
+            clearCart();
+            addToast(`Order Placed Successfully!`, "success");
+            // Use replace: true so going back from orders doesn't go to checkout
+            navigate('/orders', { replace: true });
+        } else {
+            addToast("Failed to place order: " + (response.message || "Unknown error"), "error");
+        }
+    } catch (e) {
+        addToast("Connection error. Please try again.", "error");
+    } finally {
+        setIsProcessing(false);
     }
-    setIsProcessing(false);
   };
 
   return (
-    <div className="h-full w-full flex flex-col bg-background-light dark:bg-background-dark relative">
+    <div className="h-full w-full flex flex-col bg-background-light dark:bg-background-dark relative animate-slide-in-right">
        <div className="shrink-0 z-10 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center p-4 justify-between max-w-lg mx-auto">
+        <div className="flex items-center p-4 justify-between max-w-lg mx-auto h-16">
           <button onClick={() => navigate(-1)} className="text-text-main dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
             <span className="material-symbols-rounded">arrow_back</span>
           </button>
@@ -108,14 +115,14 @@ const Checkout: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-28">
+      <div className="flex-1 overflow-y-auto pb-40 hide-scrollbar">
          <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
            {/* Quick Select Patient */}
            {patients.length > 0 && (
              <section className="animate-fade-in">
                 <div className="flex items-center justify-between mb-3 px-1">
                    <h3 className="text-text-main dark:text-white text-sm font-bold uppercase tracking-wider">Select Saved Patient</h3>
-                   <button onClick={() => navigate('/patients')} className="text-primary text-xs font-bold">Manage</button>
+                   <button onClick={() => navigate('/patients')} className="text-primary text-xs font-bold px-2 py-1 rounded-md hover:bg-primary/10 transition-colors">Manage</button>
                 </div>
                 <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
                    {patients.map(p => (
@@ -123,13 +130,13 @@ const Checkout: React.FC = () => {
                         key={p.id} 
                         onClick={() => selectPatient(p)}
                         className={`shrink-0 px-5 py-3 rounded-2xl border transition-all flex items-center gap-3 ${
-                           user.fullName === p.fullName ? 'bg-primary-light border-transparent shadow-glow text-black' : 'bg-white dark:bg-surface-dark border-gray-100 dark:border-gray-800 text-text-main dark:text-gray-300'
+                           user.fullName === p.fullName ? 'bg-primary border-transparent shadow-glow text-white' : 'bg-white dark:bg-surface-dark border-gray-200 dark:border-gray-800 text-text-main dark:text-gray-300'
                         }`}
                       >
                          <span className="material-symbols-rounded text-lg">{p.gender === 'female' ? 'female' : 'male'}</span>
                          <div className="text-left">
                             <p className="text-sm font-bold leading-none">{p.fullName.split(' ')[0]}</p>
-                            <p className={`text-[10px] opacity-60 ${user.fullName === p.fullName ? 'text-black' : 'text-gray-400'}`}>{p.age} Yrs</p>
+                            <p className={`text-[10px] opacity-60 ${user.fullName === p.fullName ? 'text-white' : 'text-gray-400'}`}>{p.age} Yrs</p>
                          </div>
                       </button>
                    ))}
@@ -142,7 +149,7 @@ const Checkout: React.FC = () => {
               <div className="space-y-4">
                  <div className="flex flex-col gap-2">
                     <label className="text-gray-700 dark:text-gray-300 text-sm font-medium ml-1">Full Name</label>
-                    <input type="text" value={user.fullName} onChange={e => handleChange('fullName', e.target.value)} className="w-full rounded-xl bg-white dark:bg-surface-dark border-none ring-1 ring-gray-200 dark:ring-gray-700 focus:ring-2 focus:ring-primary h-12 px-4 text-text-main dark:text-white" placeholder="Enter patient name" />
+                    <input type="text" value={user.fullName} onChange={e => handleChange('fullName', e.target.value)} className="w-full rounded-xl bg-white dark:bg-surface-dark border-none ring-1 ring-gray-200 dark:ring-gray-700 focus:ring-2 focus:ring-primary h-12 px-4 text-text-main dark:text-white transition-shadow" placeholder="Enter patient name" />
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-2">
@@ -174,7 +181,7 @@ const Checkout: React.FC = () => {
                             <span className="material-symbols-rounded text-primary">medical_services</span>
                             Doctor & Prescription <span className="text-xs text-gray-400 font-normal ml-1">(Optional)</span>
                          </span>
-                         <span className="material-symbols-rounded transition group-open:rotate-180">expand_more</span>
+                         <span className="material-symbols-rounded transition-transform duration-300 group-open:rotate-180">expand_more</span>
                       </summary>
                       <div className="p-4 pt-0 space-y-4 border-t border-gray-100 dark:border-gray-700">
                          <div className="pt-4">
@@ -188,7 +195,7 @@ const Checkout: React.FC = () => {
                                </span>
                                <input type="file" className="hidden" onChange={() => handleChange('prescriptionAttached', true)} />
                             </label>
-                            {user.prescriptionAttached && <p className="text-xs text-green-600 mt-1">File selected</p>}
+                            {user.prescriptionAttached && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><span className="material-symbols-rounded text-sm">check_circle</span> File selected</p>}
                          </div>
                       </div>
                    </details>
@@ -217,12 +224,12 @@ const Checkout: React.FC = () => {
                  ))}
               </div>
               {user.serviceType === 'home' && (
-                <div className="mt-4 animate-fadeIn">
+                <div className="mt-4 animate-fade-in">
                     <label className="text-gray-700 dark:text-gray-300 text-sm font-medium ml-1">Complete Address</label>
                     <textarea
                         value={user.address || ''}
                         onChange={e => handleChange('address', e.target.value)}
-                        className="w-full mt-2 rounded-xl bg-white dark:bg-surface-dark border-none ring-1 ring-gray-200 dark:ring-gray-700 focus:ring-2 focus:ring-primary p-4 text-text-main dark:text-white h-24 resize-none"
+                        className="w-full mt-2 rounded-xl bg-white dark:bg-surface-dark border-none ring-1 ring-gray-200 dark:ring-gray-700 focus:ring-2 focus:ring-primary p-4 text-text-main dark:text-white h-24 resize-none transition-shadow"
                         placeholder="House No, Street, Landmark, Pincode..."
                     ></textarea>
                 </div>
@@ -251,7 +258,7 @@ const Checkout: React.FC = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-background-dark border-t border-gray-200 dark:border-gray-800 p-4 pb-8 shadow-soft z-50">
+      <div className="absolute bottom-0 left-0 w-full bg-white dark:bg-background-dark border-t border-gray-200 dark:border-gray-800 p-4 pb-8 shadow-soft z-50">
         <div className="max-w-lg mx-auto flex items-center justify-between gap-4">
           <div className="flex flex-col">
             <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Total to pay</span>
@@ -260,11 +267,11 @@ const Checkout: React.FC = () => {
           <button 
             onClick={handlePlaceOrder} 
             disabled={isProcessing}
-            className={`flex-1 bg-primary hover:bg-green-400 text-text-main font-bold text-base h-12 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 transition-all active:scale-95 ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className={`flex-1 bg-primary hover:bg-primary-dark text-white font-bold text-base h-14 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 transition-all active:scale-95 ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
              {isProcessing ? (
                <>
-                 <span className="size-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></span>
+                 <span className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                  Processing...
                </>
              ) : (
