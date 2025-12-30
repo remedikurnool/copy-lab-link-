@@ -22,7 +22,7 @@ const Cart: React.FC = () => {
       <div className="shrink-0 z-20 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center p-4 justify-between h-16">
           <button onClick={() => navigate(-1)} className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-text-main dark:text-white">
-            <span className="material-symbols-outlined">arrow_back</span>
+            <span className="material-symbols-rounded">arrow_back</span>
           </button>
           <h2 className="text-text-main dark:text-white text-lg font-bold leading-tight flex-1 text-center pr-10">My Cart ({cart.length})</h2>
         </div>
@@ -31,13 +31,13 @@ const Cart: React.FC = () => {
       <div className="flex-1 overflow-y-auto pb-32">
         {/* Safety Banner */}
         <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 flex items-center justify-center gap-2">
-          <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[18px]">verified_user</span>
+          <span className="material-symbols-rounded text-blue-600 dark:text-blue-400 text-[18px]">verified_user</span>
           <p className="text-blue-800 dark:text-blue-300 text-xs font-semibold uppercase tracking-wide">Safe & Hygienic Collection</p>
         </div>
 
         {cart.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <span className="material-symbols-outlined text-6xl text-gray-300">shopping_cart_off</span>
+            <span className="material-symbols-rounded text-6xl text-gray-300">shopping_cart_off</span>
             <p className="text-gray-500">Your cart is empty</p>
             <button onClick={() => navigate('/explore')} className="bg-primary px-6 py-2 rounded-full font-bold text-text-main">Browse Tests</button>
           </div>
@@ -55,7 +55,7 @@ const Cart: React.FC = () => {
                       <div className="flex justify-between items-start">
                         <h3 className="text-text-main dark:text-white text-base font-bold leading-tight">{item.name}</h3>
                         <button onClick={() => removeFromCart(item.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
-                          <span className="material-symbols-outlined text-[20px]">delete</span>
+                          <span className="material-symbols-rounded text-[20px]">delete</span>
                         </button>
                       </div>
                       <p className="text-gray-500 dark:text-gray-400 text-xs font-medium">{item.selectedCenter.centerName}</p>
@@ -63,7 +63,7 @@ const Cart: React.FC = () => {
                       {/* Show Slot info if available (for doctors) */}
                       {item.appointmentDate && (
                          <div className="flex items-center gap-1 mt-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 w-fit px-2 py-0.5 rounded-md">
-                            <span className="material-symbols-outlined text-[14px]">event</span>
+                            <span className="material-symbols-rounded text-[14px]">event</span>
                             <span>{item.appointmentDate} • {item.appointmentSlot}</span>
                          </div>
                       )}
@@ -84,7 +84,7 @@ const Cart: React.FC = () => {
             <div className="p-4">
               <div className="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-dashed border-gray-300 dark:border-gray-600">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="material-symbols-outlined text-primary text-[20px]">local_offer</span>
+                  <span className="material-symbols-rounded text-primary text-[20px]">local_offer</span>
                   <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Apply Coupon</h3>
                 </div>
                 {appliedCoupon ? (
@@ -150,7 +150,7 @@ const Cart: React.FC = () => {
               <span className="text-xl font-extrabold text-text-main dark:text-white leading-none">₹{finalTotal}</span>
             </div>
             <button onClick={() => navigate('/checkout')} className="flex-1 bg-primary hover:bg-primary-dark text-text-main h-14 rounded-full font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
-               Select Address & Pay <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+               Select Address & Pay <span className="material-symbols-rounded text-[20px]">arrow_forward</span>
             </button>
           </div>
         </div>

@@ -22,12 +22,12 @@ const Doctors: React.FC = () => {
   });
 
   return (
-    <div className="h-full flex flex-col w-full bg-background-light dark:bg-background-dark">
+    <div className="h-full flex flex-col w-full bg-background-light dark:bg-background-dark animate-slide-in-right">
       {/* Header */}
        <div className="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between shrink-0 z-20">
           <div className="flex items-center gap-3">
              <button onClick={() => navigate(-1)} className="flex items-center justify-center size-10 rounded-full bg-white dark:bg-surface-dark shadow-sm text-text-main dark:text-white hover:bg-gray-50 active:scale-95 transition-transform">
-                <span className="material-symbols-outlined">arrow_back</span>
+                <span className="material-symbols-rounded">arrow_back</span>
              </button>
              <h2 className="text-text-main dark:text-white text-2xl font-bold leading-tight tracking-tight">Find Doctors</h2>
           </div>
@@ -36,7 +36,7 @@ const Doctors: React.FC = () => {
         {/* Search Bar */}
         <div className="px-4 pb-2 shrink-0">
            <div className="relative">
-             <span className="absolute left-4 top-3.5 text-gray-400 material-symbols-outlined">search</span>
+             <span className="absolute left-4 top-3.5 text-gray-400 material-symbols-rounded">search</span>
              <input 
                 type="text"
                 value={searchTerm}
@@ -67,7 +67,7 @@ const Doctors: React.FC = () => {
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto px-4 pb-24 flex flex-col gap-4 hide-scrollbar pt-2">
+        <div className="flex-1 overflow-y-auto px-4 pb-6 flex flex-col gap-4 hide-scrollbar pt-2">
             {filteredDoctors.length === 0 ? (
                 <div className="text-center py-10 text-gray-500">No doctors found.</div>
             ) : (
@@ -84,7 +84,7 @@ const Doctors: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-1 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded-md">
                                     <span className="text-[10px] font-bold text-green-700 dark:text-green-400">{doc.centers[0].rating}</span>
-                                    <span className="material-symbols-outlined text-[10px] text-green-600 filled-icon">star</span>
+                                    <span className="material-symbols-rounded text-[10px] text-green-600 filled-icon">star</span>
                                 </div>
                             </div>
                             

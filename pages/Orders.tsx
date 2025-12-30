@@ -30,7 +30,7 @@ const Orders: React.FC = () => {
       <div className="shrink-0 z-20 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center p-4 justify-between h-16">
           <button onClick={() => navigate(-1)} className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-text-main dark:text-white">
-            <span className="material-symbols-outlined">arrow_back</span>
+            <span className="material-symbols-rounded">arrow_back</span>
           </button>
           <h2 className="text-text-main dark:text-white text-lg font-bold leading-tight flex-1 text-center pr-10">My Orders</h2>
         </div>
@@ -39,7 +39,7 @@ const Orders: React.FC = () => {
       <div className="flex-1 overflow-y-auto pb-6">
         {orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <span className="material-symbols-outlined text-6xl text-gray-300">receipt_long</span>
+            <span className="material-symbols-rounded text-6xl text-gray-300">receipt_long</span>
             <p className="text-gray-500">No orders yet</p>
             <button onClick={() => navigate('/explore')} className="bg-primary px-6 py-2 rounded-full font-bold text-text-main">Book a Test</button>
           </div>
@@ -77,7 +77,7 @@ const Orders: React.FC = () => {
                          <span className="text-lg font-bold text-text-main dark:text-white">₹{order.totalAmount}</span>
                     </div>
                     <button className="text-primary text-sm font-bold flex items-center gap-1">
-                        View Details <span className="material-symbols-outlined text-sm">chevron_right</span>
+                        View Details <span className="material-symbols-rounded text-sm">chevron_right</span>
                     </button>
                 </div>
               </div>

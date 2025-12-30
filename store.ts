@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { CartItem, TestItem, Coupon, UserDetails, Order, B2BUser, CenterPrice } from './types';
+import { CartItem, TestItem, Coupon, UserDetails, Order, B2BUser, CenterPrice, Patient } from './types';
 import { MOCK_TESTS, MOCK_COUPONS, MOCK_DOCTORS } from './data';
 import { api } from './services/api';
 
@@ -19,6 +19,9 @@ interface AppState {
   // User & Orders (Patient Context)
   user: UserDetails;
   updateUser: (details: Partial<UserDetails>) => void;
+  patients: Patient[];
+  addPatient: (patient: Patient) => void;
+  removePatient: (id: string) => void;
   orders: Order[];
   fetchUserOrders: () => Promise<void>;
   addOrder: (order: Order) => void;
@@ -45,12 +48,9 @@ interface AppState {
 
 // Helper to map WP API response to TestItem
 const mapWPDataToTestItem = (item: any, type: 'test' | 'scan' | 'package' | 'doctor'): TestItem => {
-  // ACF Fields
   const acf = item.acf || {};
-  
   const price = acf.price ? Number(acf.price) : 1000;
   const mrp = acf.mrp ? Number(acf.mrp) : Math.round(price * 1.2);
-  
   const defaultCenter: CenterPrice = {
     centerName: type === 'doctor' ? (acf.clinic_name || 'Main Clinic') : 'Main Lab',
     price: price,
@@ -61,10 +61,7 @@ const mapWPDataToTestItem = (item: any, type: 'test' | 'scan' | 'package' | 'doc
     tat: acf.report_time || (type === 'doctor' ? 'N/A' : '24 Hours'),
     location: acf.location || 'Central'
   };
-
-  // Strip HTML from description
   const description = item.content?.rendered?.replace(/<[^>]+>/g, '') || item.title?.rendered || '';
-
   return {
     id: item.id.toString(),
     name: item.title?.rendered || 'Unknown Item',
@@ -80,8 +77,6 @@ const mapWPDataToTestItem = (item: any, type: 'test' | 'scan' | 'package' | 'doc
     centers: [defaultCenter],
     isNabl: true,
     tags: [],
-    
-    // Doctor Specific
     specialty: acf.specialty || '',
     experience: acf.experience || '',
     about: acf.about || description
@@ -106,7 +101,6 @@ export const useStore = create<AppState>()(
       isLoading: false,
       fetchTests: async () => {
         set({ isLoading: true });
-        
         try {
           const [testsData, scansData, packagesData, checkupsData] = await Promise.all([
              api.getTests(),
@@ -114,28 +108,17 @@ export const useStore = create<AppState>()(
              api.getPackages(),
              api.getCheckups()
           ]);
-
-          const hasData = (testsData && testsData.length > 0) || 
-                          (scansData && scansData.length > 0) || 
-                          (packagesData && packagesData.length > 0) ||
-                          (checkupsData && checkupsData.length > 0);
-
-          // Check if real API returned data, otherwise fall back to mock
+          const hasData = (testsData && testsData.length > 0) || (scansData && scansData.length > 0) || (packagesData && packagesData.length > 0) || (checkupsData && checkupsData.length > 0);
           if (!hasData) {
-             console.warn("API returned empty data, using MOCK data.");
              set({ tests: MOCK_TESTS, isLoading: false });
              return;
           }
-
           const mappedTests = Array.isArray(testsData) ? testsData.map((t: any) => mapWPDataToTestItem(t, 'test')) : [];
           const mappedScans = Array.isArray(scansData) ? scansData.map((s: any) => mapWPDataToTestItem(s, 'scan')) : [];
           const mappedPackages = Array.isArray(packagesData) ? packagesData.map((p: any) => mapWPDataToTestItem(p, 'package')) : [];
           const mappedCheckups = Array.isArray(checkupsData) ? checkupsData.map((c: any) => mapWPDataToTestItem(c, 'package')) : [];
-
           set({ tests: [...mappedTests, ...mappedScans, ...mappedPackages, ...mappedCheckups], isLoading: false });
-
         } catch (error) {
-          console.error("Failed to fetch data", error);
           set({ tests: MOCK_TESTS, isLoading: false }); 
         }
       },
@@ -164,26 +147,28 @@ export const useStore = create<AppState>()(
       },
       updateUser: (details) => set((state) => ({ user: { ...state.user, ...details } })),
       
+      patients: [],
+      addPatient: (patient) => set((state) => ({ patients: [patient, ...state.patients] })),
+      removePatient: (id) => set((state) => ({ patients: state.patients.filter(p => p.id !== id) })),
+
       orders: [],
       addOrder: (order) => set((state) => ({ orders: [order, ...state.orders] })),
       fetchUserOrders: async () => {
           const { b2bUser } = get();
           if (!b2bUser?.id) return;
-          
           try {
               const wcOrders = await api.getUserOrders(Number(b2bUser.id));
               if (wcOrders && Array.isArray(wcOrders)) {
-                  // Map WC Orders to App Orders
                   const mappedOrders: Order[] = wcOrders.map((o: any) => ({
                       id: o.id.toString(),
                       date: o.date_created,
                       totalAmount: Number(o.total),
                       status: o.status.charAt(0).toUpperCase() + o.status.slice(1),
-                      userDetails: get().user, // Keeping current user details as placeholder since WC might not return full details easily in list
+                      userDetails: get().user,
                       items: o.line_items.map((li: any) => ({
                           id: li.product_id.toString(),
                           name: li.name,
-                          type: 'test', // fallback
+                          type: 'test',
                           category: 'Ordered',
                           description: '',
                           selectedCenter: {
@@ -207,17 +192,13 @@ export const useStore = create<AppState>()(
           }
       },
 
-      // B2B Auth Logic
       b2bUser: null,
-      loginB2B: (user: B2BUser) => {
-         set({ b2bUser: user });
-      },
+      loginB2B: (user: B2BUser) => set({ b2bUser: user }),
       logoutB2B: () => set({ b2bUser: null, orders: [] }),
 
       cart: [],
       addToCart: (item, centerIndex, slotDate, slotTime) => set((state) => {
         const cartItemId = `${item.id}-${centerIndex}`;
-        
         const newItem: CartItem = { 
             ...item, 
             cartId: cartItemId,
@@ -225,15 +206,12 @@ export const useStore = create<AppState>()(
             appointmentDate: slotDate,
             appointmentSlot: slotTime
         };
-
         const existingIndex = state.cart.findIndex(i => i.id === item.id);
-        
         if (existingIndex >= 0) {
            const updatedCart = [...state.cart];
            updatedCart[existingIndex] = newItem;
            return { cart: updatedCart };
         }
-        
         return { cart: [...state.cart, newItem] };
       }),
       removeFromCart: (itemId) => set((state) => ({ 
@@ -245,10 +223,8 @@ export const useStore = create<AppState>()(
       applyCoupon: (code) => {
         const coupon = MOCK_COUPONS.find(c => c.code === code.toUpperCase());
         const { subtotal } = get().getCartTotal();
-        
         if (!coupon) return 'Invalid coupon code';
         if (subtotal < coupon.minOrderValue) return `Minimum order value of ₹${coupon.minOrderValue} required`;
-        
         set({ appliedCoupon: coupon });
         return null;
       },
@@ -258,7 +234,6 @@ export const useStore = create<AppState>()(
         const { cart, appliedCoupon } = get();
         const subtotal = cart.reduce((sum, item) => sum + item.selectedCenter.price, 0);
         let discount = 0;
-
         if (appliedCoupon) {
           if (appliedCoupon.discountType === 'percent') {
             discount = (subtotal * appliedCoupon.value) / 100;
@@ -266,9 +241,7 @@ export const useStore = create<AppState>()(
             discount = appliedCoupon.value;
           }
         }
-
         const finalTotal = Math.max(0, subtotal - discount);
-        
         return { subtotal, discount, finalTotal };
       }
     }),
@@ -282,6 +255,7 @@ export const useStore = create<AppState>()(
         tests: state.tests, 
         doctors: state.doctors,
         user: state.user,
+        patients: state.patients,
         orders: state.orders,
         b2bUser: state.b2bUser 
       }), 

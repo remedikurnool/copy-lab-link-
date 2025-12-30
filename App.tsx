@@ -12,6 +12,7 @@ import Orders from './pages/Orders';
 import Doctors from './pages/Doctors';
 import DoctorDetails from './pages/DoctorDetails';
 import Login from './pages/Login';
+import Patients from './pages/Patients';
 
 const App: React.FC = () => {
   return (
@@ -38,6 +39,12 @@ const App: React.FC = () => {
           <Route path="/orders" element={
             <ProtectedRoute>
               <Orders />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/patients" element={
+            <ProtectedRoute>
+              <Patients />
             </ProtectedRoute>
           } />
           

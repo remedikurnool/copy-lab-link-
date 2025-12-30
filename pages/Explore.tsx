@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Explore: React.FC = () => {
   const { tests } = useStore();
   const location = useLocation();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('All Tests');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -15,7 +16,7 @@ const Explore: React.FC = () => {
       }
   }, [location.state]);
 
-  const categories = ['All Tests', 'Diabetes', 'Heart', 'Kidney', 'Thyroid', 'Full Body', 'Packages', 'Scans'];
+  const categories = ['All Tests', 'Full Body', 'Packages', 'Diabetes', 'Heart', 'Scans'];
   
   const filteredTests = tests.filter(test => {
     let matchesCategory = true;
@@ -37,108 +38,98 @@ const Explore: React.FC = () => {
   });
 
   return (
-    <div className="h-full flex flex-col w-full bg-background-light dark:bg-background-dark">
-       {/* Sticky Header Section */}
-       <div className="shrink-0 z-20 bg-background-light dark:bg-background-dark shadow-sm">
-           {/* Header */}
-           <div className="flex items-center p-4 pb-2 justify-between">
-              <h2 className="text-text-main dark:text-white text-2xl font-bold leading-tight tracking-tight flex-1">Explore</h2>
-              <div className="flex items-center justify-end">
-                <div className="flex items-center justify-center rounded-full size-10 bg-white dark:bg-surface-dark shadow-sm text-text-main dark:text-white">
-                  <span className="material-symbols-outlined text-[24px]">search</span>
-                </div>
-              </div>
-            </div>
+    <div className="h-full flex flex-col w-full">
+       {/* Header */}
+       <div className="flex items-center gap-3 px-4 pt-6 pb-2 shrink-0 z-20">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="flex items-center justify-center size-10 rounded-full bg-white dark:bg-surface-dark shadow-sm text-text-main dark:text-white transition-transform active:scale-95"
+          >
+             <span className="material-symbols-rounded">arrow_back</span>
+          </button>
+          <h2 className="text-3xl font-display font-bold text-text-main dark:text-white">Explore</h2>
+       </div>
 
-            {/* Search Bar - Inline */}
-            <div className="px-4 pb-2">
-               <input 
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search tests, scans..."
-                  className="w-full bg-white dark:bg-surface-dark border-none rounded-xl py-3 px-4 text-sm shadow-sm focus:ring-2 focus:ring-primary/50 text-text-main dark:text-white"
-               />
-            </div>
+       {/* Search */}
+       <div className="px-6 py-2 shrink-0">
+          <div className="relative">
+             <span className="absolute left-4 top-3.5 text-gray-400 material-symbols-rounded">search</span>
+             <input 
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search..."
+                className="w-full bg-white dark:bg-surface-dark/50 border-none rounded-2xl py-3.5 pl-12 pr-4 text-sm shadow-sm focus:ring-2 focus:ring-primary-light/50 text-text-main dark:text-white backdrop-blur-md"
+             />
+          </div>
+       </div>
 
-            {/* Filter Chips */}
-            <div className="pb-3">
-              <div className="flex gap-3 px-4 py-2 overflow-x-auto hide-scrollbar">
-                {categories.map(cat => (
-                  <div 
-                    key={cat}
-                    onClick={() => setFilter(cat)}
-                    className={`flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full pl-5 pr-5 cursor-pointer transition-colors border ${
-                      filter === cat 
-                        ? 'bg-primary border-primary shadow-sm shadow-primary/30' 
-                        : 'bg-white dark:bg-surface-dark border-gray-200 dark:border-gray-700 hover:border-primary/50'
-                    }`}
-                  >
-                    <p className={`text-sm font-medium leading-normal ${filter === cat ? 'text-background-dark font-semibold' : 'text-text-main dark:text-gray-300'}`}>
-                      {cat}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <div className="px-4 pt-1 flex items-center justify-between text-xs text-text-sub">
-                <span>Showing {filteredTests.length} results</span>
-                <span className="flex items-center gap-1 cursor-pointer"><span className="material-symbols-outlined text-[14px]">sort</span> Sort by: Popular</span>
-              </div>
-            </div>
-        </div>
+       {/* Filters */}
+       <div className="shrink-0 py-2">
+         <div className="flex gap-2 px-6 overflow-x-auto hide-scrollbar">
+           {categories.map(cat => (
+             <button 
+               key={cat}
+               onClick={() => setFilter(cat)}
+               className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 border ${
+                 filter === cat 
+                   ? 'bg-text-main dark:bg-white text-white dark:text-black border-transparent shadow-lg transform scale-105' 
+                   : 'bg-transparent text-text-sub dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-gray-300'
+               }`}
+             >
+               {cat}
+             </button>
+           ))}
+         </div>
+       </div>
 
-        {/* List */}
-        <div className="flex-1 overflow-y-auto px-4 pb-24 pt-4 flex flex-col gap-4 hide-scrollbar bg-background-light dark:bg-background-dark">
-          {filteredTests.length === 0 ? (
-            <div className="text-center py-10 text-gray-500">No tests found matching your criteria.</div>
-          ) : (
-            filteredTests.map((test) => (
-              <Link to={`/details/${test.id}`} key={test.id} className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-card border border-gray-100 dark:border-gray-800 flex flex-col gap-3 relative overflow-visible group active:scale-[0.99] transition-transform z-0">
-                <div className="flex items-start gap-3">
-                  {/* Icon Box */}
-                  <div className={`flex items-center justify-center rounded-2xl shrink-0 size-14 text-2xl ${
-                      test.type === 'scan' ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600' :
-                      test.type === 'package' ? 'bg-orange-50 dark:bg-orange-900/30 text-orange-600' :
-                      'bg-primary/10 text-primary'
-                  }`}>
-                    <span className="material-symbols-outlined">
-                      {test.type === 'scan' ? 'radiology' : 
-                       test.type === 'package' ? 'inventory_2' : 
-                       test.category === 'Heart' ? 'cardiology' : 
-                       test.category === 'Kidney' ? 'nephrology' : 'biotech'}
-                    </span>
+       {/* Results List */}
+       <div className="flex-1 overflow-y-auto px-6 pt-4 pb-32 hide-scrollbar space-y-4">
+         {filteredTests.length === 0 ? (
+           <div className="flex flex-col items-center justify-center h-64 text-text-sub opacity-50">
+             <span className="material-symbols-rounded text-4xl mb-2">search_off</span>
+             <p>No results found</p>
+           </div>
+         ) : (
+           filteredTests.map((test, index) => (
+             <Link 
+               to={`/details/${test.id}`} 
+               key={test.id} 
+               className="block bg-white dark:bg-surface-dark/40 backdrop-blur-md rounded-[1.5rem] p-1 shadow-card border border-white/40 dark:border-white/5 animate-slide-up hover:bg-white/80 dark:hover:bg-surface-dark/60 transition-colors"
+               style={{ animationDelay: `${index * 0.05}s` }}
+             >
+               <div className="flex gap-4 p-3">
+                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${
+                     test.type === 'scan' ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-600' :
+                     test.type === 'package' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' :
+                     'bg-teal-50 dark:bg-teal-900/20 text-teal-600'
+                 }`}>
+                   <span className="material-symbols-rounded text-2xl">
+                     {test.type === 'scan' ? 'radiology' : 
+                      test.type === 'package' ? 'inventory_2' : 
+                      'biotech'}
+                   </span>
+                 </div>
+                 
+                 <div className="flex-1 min-w-0 py-1">
+                   <div className="flex justify-between items-start">
+                     <h3 className="text-text-main dark:text-white font-bold text-sm truncate pr-2">{test.name}</h3>
+                     <span className="text-text-main dark:text-white font-bold text-sm">₹{test.centers[0].price}</span>
+                   </div>
+                   <p className="text-xs text-text-sub dark:text-gray-400 line-clamp-2 mt-1">{test.shortDescription || test.description}</p>
+                 </div>
+               </div>
+               
+               <div className="px-3 pb-3 flex justify-between items-center mt-1">
+                  <span className="text-[10px] bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-300 px-2 py-1 rounded-lg font-medium">{test.category}</span>
+                  <div className="text-xs font-bold text-primary-dark dark:text-primary-light flex items-center gap-1">
+                    Book <span className="material-symbols-rounded text-sm">arrow_forward</span>
                   </div>
-                  
-                  {/* Content */}
-                  <div className="flex-1 min-w-0 flex flex-col gap-1">
-                    <div className="flex justify-between items-start gap-2">
-                      <h3 className="text-text-main dark:text-white text-base font-bold leading-tight line-clamp-2">{test.name}</h3>
-                      <span className="shrink-0 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wide whitespace-nowrap">{test.category}</span>
-                    </div>
-                    <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed line-clamp-2">{test.shortDescription || test.description}</p>
-                  </div>
-                </div>
-
-                {/* Pricing Strip */}
-                <div className="bg-gray-50 dark:bg-black/20 rounded-xl p-3 flex items-center justify-between mt-auto">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Best Price</span>
-                    <div className="flex items-baseline gap-1.5">
-                        <span className="text-lg font-bold text-text-main dark:text-white">₹{test.centers[0].price}</span>
-                        {test.centers[0].mrp > test.centers[0].price && (
-                            <span className="text-xs text-gray-400 line-through decoration-gray-400">₹{test.centers[0].mrp}</span>
-                        )}
-                    </div>
-                  </div>
-                  
-                  <button className="flex items-center gap-1 text-primary text-xs font-bold bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-700 px-3 py-1.5 rounded-lg shadow-sm">
-                      View <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                  </button>
-                </div>
-              </Link>
-            ))
-          )}
-        </div>
+               </div>
+             </Link>
+           ))
+         )}
+       </div>
     </div>
   );
 };

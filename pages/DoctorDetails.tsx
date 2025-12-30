@@ -30,11 +30,11 @@ const DoctorDetails: React.FC = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 flex items-center justify-between p-4 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md shrink-0">
         <button onClick={() => navigate(-1)} className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-surface-dark transition-colors">
-          <span className="material-symbols-outlined text-gray-800 dark:text-gray-200">arrow_back</span>
+          <span className="material-symbols-rounded text-gray-800 dark:text-gray-200">arrow_back</span>
         </button>
         <h2 className="text-base font-bold text-gray-900 dark:text-white">Doctor Profile</h2>
         <button className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-surface-dark transition-colors">
-          <span className="material-symbols-outlined text-gray-800 dark:text-gray-200">share</span>
+          <span className="material-symbols-rounded text-gray-800 dark:text-gray-200">share</span>
         </button>
       </header>
 

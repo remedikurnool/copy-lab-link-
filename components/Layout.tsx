@@ -6,38 +6,53 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const { pathname } = useLocation();
   const { cart } = useStore();
   
-  // Hide bottom nav on details, checkout, cart, orders, doctor, and login pages
-  const hideBottomNav = ['/checkout', '/cart', '/details', '/doctor', '/orders', '/login'].some(path => pathname.includes(path));
+  // Whitelist approach: Only show bottom nav on these main tabs
+  const mainTabs = ['/', '/explore', '/cart', '/profile'];
+  const showBottomNav = mainTabs.includes(pathname);
+
+  const navItems = [
+    { path: '/', icon: 'home', label: 'Home' },
+    { path: '/explore', icon: 'grid_view', label: 'Explore' },
+    { path: '/cart', icon: 'shopping_bag', label: 'Cart', badge: cart.length },
+    { path: '/profile', icon: 'person', label: 'Profile' },
+  ];
 
   return (
-    <div className="h-[100dvh] w-full bg-background-light dark:bg-background-dark md:max-w-md md:mx-auto relative shadow-2xl overflow-hidden flex flex-col">
-      {/* Main Content Area - Children are responsible for scrolling */}
+    <div className="h-[100dvh] w-full md:max-w-md md:mx-auto relative flex flex-col md:shadow-2xl md:my-4 md:h-[95vh] md:rounded-[3rem] overflow-hidden bg-transparent">
+      {/* Main Content Area */}
       <div className="flex-1 w-full overflow-hidden relative">
         {children}
       </div>
 
-      {!hideBottomNav && (
-        <nav className="shrink-0 bg-white dark:bg-background-dark border-t border-gray-100 dark:border-gray-800 py-2 px-6 flex justify-between items-center z-40 w-full pb-safe">
-          <Link to="/" className={`flex flex-col items-center gap-1 group ${pathname === '/' ? 'text-primary' : 'text-gray-400 hover:text-text-main dark:hover:text-gray-200'}`}>
-            <span className={`material-symbols-outlined text-[26px] ${pathname === '/' ? 'filled-icon' : ''}`}>home</span>
-            <span className="text-[10px] font-bold">Home</span>
-          </Link>
-          <Link to="/explore" className={`flex flex-col items-center gap-1 group ${pathname === '/explore' ? 'text-primary' : 'text-gray-400 hover:text-text-main dark:hover:text-gray-200'}`}>
-            <span className={`material-symbols-outlined text-[26px] ${pathname === '/explore' ? 'filled-icon' : ''}`}>search</span>
-            <span className="text-[10px] font-medium">Explore</span>
-          </Link>
-          <Link to="/cart" className={`flex flex-col items-center gap-1 group ${pathname === '/cart' ? 'text-primary' : 'text-gray-400 hover:text-text-main dark:hover:text-gray-200'} relative`}>
-            <span className={`material-symbols-outlined text-[26px] ${pathname === '/cart' ? 'filled-icon' : ''}`}>shopping_cart</span>
-            <span className="text-[10px] font-medium">Cart</span>
-            {cart.length > 0 && (
-              <span className="absolute -top-1 right-2 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">{cart.length}</span>
-            )}
-          </Link>
-          <Link to="/profile" className={`flex flex-col items-center gap-1 group ${pathname === '/profile' ? 'text-primary' : 'text-gray-400 hover:text-text-main dark:hover:text-gray-200'}`}>
-            <span className={`material-symbols-outlined text-[26px] ${pathname === '/profile' ? 'filled-icon' : ''}`}>person</span>
-            <span className="text-[10px] font-medium">Profile</span>
-          </Link>
-        </nav>
+      {showBottomNav && (
+        <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none animate-slide-up">
+          <nav className="pointer-events-auto bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-float rounded-full px-2 py-2 flex items-center gap-1">
+            {navItems.map((item) => {
+              const isActive = pathname === item.path;
+              return (
+                <Link 
+                  key={item.path}
+                  to={item.path} 
+                  className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
+                    isActive 
+                      ? 'bg-text-main dark:bg-white text-white dark:text-black scale-100 shadow-glow' 
+                      : 'text-text-sub dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <span className={`material-symbols-rounded text-[24px] ${isActive ? 'filled-icon' : ''}`}>
+                    {item.icon}
+                  </span>
+                  
+                  {item.badge ? (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold border-2 border-white dark:border-surface-dark transform translate-x-1 -translate-y-1">
+                      {item.badge}
+                    </span>
+                  ) : null}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
       )}
     </div>
   );

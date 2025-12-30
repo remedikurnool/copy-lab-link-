@@ -38,13 +38,17 @@ export interface CartItem extends TestItem {
   appointmentSlot?: string;
 }
 
-export interface UserDetails {
+export interface Patient {
+  id: string;
   fullName: string;
   age: string;
   phone: string;
   gender: 'male' | 'female' | 'other';
+  address?: string;
+}
+
+export interface UserDetails extends Omit<Patient, 'id'> {
   serviceType: 'home' | 'lab';
-  address?: string; // Added for Home Collection
   timeSlot: 'morning' | 'afternoon' | 'evening';
   doctorName?: string;
   prescriptionAttached?: boolean;

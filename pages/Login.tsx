@@ -56,14 +56,14 @@ const Login: React.FC = () => {
       {/* Header */}
       <div className="shrink-0 p-4">
         <button onClick={() => navigate(-1)} className="flex items-center justify-center size-10 rounded-full bg-white dark:bg-surface-dark shadow-sm text-text-main dark:text-white hover:bg-gray-50 transition-colors">
-            <span className="material-symbols-outlined">arrow_back</span>
+            <span className="material-symbols-rounded">arrow_back</span>
         </button>
       </div>
 
       <div className="flex-1 flex flex-col justify-center px-6 pb-20">
         <div className="mb-8 text-center">
             <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-primary">
-                <span className="material-symbols-outlined text-4xl filled-icon">business_center</span>
+                <span className="material-symbols-rounded text-4xl filled-icon">business_center</span>
             </div>
             <h1 className="text-3xl font-bold text-text-main dark:text-white mb-2">Partner Login</h1>
             <p className="text-gray-500 dark:text-gray-400">Secure access for Lab Link B2B Partners</p>
@@ -73,7 +73,7 @@ const Login: React.FC = () => {
             <div className="space-y-1">
                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Username / Email</label>
                 <div className="relative">
-                    <span className="absolute left-4 top-3.5 text-gray-400 material-symbols-outlined">person</span>
+                    <span className="absolute left-4 top-3.5 text-gray-400 material-symbols-rounded">person</span>
                     <input 
                         type="text" 
                         required
@@ -88,7 +88,7 @@ const Login: React.FC = () => {
             <div className="space-y-1">
                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Password</label>
                 <div className="relative">
-                    <span className="absolute left-4 top-3.5 text-gray-400 material-symbols-outlined">lock</span>
+                    <span className="absolute left-4 top-3.5 text-gray-400 material-symbols-rounded">lock</span>
                     <input 
                         type="password" 
                         required
@@ -102,7 +102,7 @@ const Login: React.FC = () => {
 
             {error && (
                 <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs p-3 rounded-xl flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">error</span>
+                    <span className="material-symbols-rounded text-sm">error</span>
                     {error}
                 </div>
             )}
