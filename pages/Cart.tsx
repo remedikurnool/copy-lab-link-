@@ -8,7 +8,7 @@ const Cart: React.FC = () => {
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState<string | null>(null);
 
-  const { subtotal, discount, finalTotal } = getCartTotal();
+  const { subtotal, discount, homeCollectionCharges, finalTotal } = getCartTotal();
 
   const handleApplyCoupon = () => {
     const error = applyCoupon(couponInput);
@@ -143,6 +143,12 @@ const Cart: React.FC = () => {
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-500 dark:text-gray-400">Discount</span>
                       <span className="text-primary font-medium">-₹{discount}</span>
+                    </div>
+                  )}
+                  {homeCollectionCharges > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">Home Collection</span>
+                      <span className="text-text-main dark:text-gray-200 font-medium">₹{homeCollectionCharges}</span>
                     </div>
                   )}
                   <div className="h-px bg-gray-100 dark:bg-gray-800 my-2"></div>

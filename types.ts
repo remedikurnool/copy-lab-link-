@@ -29,6 +29,11 @@ export interface TestItem {
   specialty?: string;
   experience?: string;
   about?: string;
+
+  // Search/Filter metadata
+  organ?: string;
+  condition?: string;
+  risk_factor?: string;
 }
 
 export interface CartItem extends TestItem {

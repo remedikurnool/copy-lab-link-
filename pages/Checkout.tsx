@@ -7,7 +7,7 @@ import { api } from '../services/api';
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { cart, getCartTotal, clearCart, user, updateUser, addOrder, patients, addToast } = useStore();
-  const { finalTotal } = getCartTotal();
+  const { subtotal, discount, homeCollectionCharges, finalTotal } = getCartTotal();
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
@@ -209,15 +209,18 @@ const Checkout: React.FC = () => {
               <h3 className="text-text-main dark:text-white text-lg font-bold mb-4 px-1">Service Type</h3>
               <div className="grid grid-cols-2 gap-4">
                  {[
-                   { id: 'home', icon: 'home_health', label: 'Home Collection' },
-                   { id: 'lab', icon: 'biotech', label: 'Lab Visit' }
+                   { id: 'home', icon: 'home_health', label: 'Home Collection', sub: '+ ₹100 for Lab Tests' },
+                   { id: 'lab', icon: 'biotech', label: 'Lab Visit', sub: 'No Extra Charge' }
                  ].map((type) => (
                     <label key={type.id} className="cursor-pointer relative">
                        <input type="radio" name="service_type" className="peer sr-only" checked={user.serviceType === type.id} onChange={() => handleChange('serviceType', type.id as any)} />
-                       <div className="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 transition-all peer-checked:border-primary peer-checked:bg-primary/5 dark:peer-checked:bg-primary/10 peer-checked:shadow-sm group">
+                       <div className="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 transition-all peer-checked:border-primary peer-checked:bg-primary/5 dark:peer-checked:bg-primary/10 peer-checked:shadow-sm group h-full">
                           <div className="flex flex-col items-center gap-2">
                              <span className="material-symbols-rounded text-gray-400 peer-checked:text-primary text-3xl">{type.icon}</span>
-                             <span className="font-bold text-sm text-gray-600 dark:text-gray-300 peer-checked:text-text-main dark:peer-checked:text-white">{type.label}</span>
+                             <div className="text-center">
+                                <span className="block font-bold text-sm text-gray-600 dark:text-gray-300 peer-checked:text-text-main dark:peer-checked:text-white">{type.label}</span>
+                                <span className="block text-[10px] text-gray-400 font-medium mt-1">{type.sub}</span>
+                             </div>
                           </div>
                        </div>
                     </label>
@@ -253,6 +256,34 @@ const Checkout: React.FC = () => {
                       </div>
                    </label>
                 ))}
+             </div>
+           </section>
+
+           {/* Payment Summary */}
+           <section className="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
+             <h3 className="text-base font-bold mb-3 text-text-main dark:text-white">Bill Details</h3>
+             <div className="space-y-2">
+                 <div className="flex justify-between items-center text-sm">
+                   <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+                   <span className="text-text-main dark:text-gray-200 font-medium">₹{subtotal}</span>
+                 </div>
+                 {discount > 0 && (
+                   <div className="flex justify-between items-center text-sm">
+                     <span className="text-gray-500 dark:text-gray-400">Discount</span>
+                     <span className="text-primary font-medium">-₹{discount}</span>
+                   </div>
+                 )}
+                 {homeCollectionCharges > 0 && (
+                   <div className="flex justify-between items-center text-sm">
+                     <span className="text-gray-500 dark:text-gray-400">Home Collection</span>
+                     <span className="text-text-main dark:text-gray-200 font-medium">₹{homeCollectionCharges}</span>
+                   </div>
+                 )}
+                 <div className="h-px bg-gray-100 dark:bg-gray-700 my-2"></div>
+                 <div className="flex justify-between items-center font-bold text-base">
+                   <span className="text-text-main dark:text-white">To Pay</span>
+                   <span className="text-text-main dark:text-white">₹{finalTotal}</span>
+                 </div>
              </div>
            </section>
         </div>

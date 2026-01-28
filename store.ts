@@ -39,7 +39,7 @@ interface AppState {
   appliedCoupon: Coupon | null;
   applyCoupon: (code: string) => string | null;
   removeCoupon: () => void;
-  getCartTotal: () => { subtotal: number; discount: number; finalTotal: number };
+  getCartTotal: () => { subtotal: number; discount: number; homeCollectionCharges: number; finalTotal: number };
 }
 
 const mapWPDataToTestItem = (item: any, type: 'test' | 'scan' | 'package' | 'doctor'): TestItem => {
@@ -74,7 +74,12 @@ const mapWPDataToTestItem = (item: any, type: 'test' | 'scan' | 'package' | 'doc
     tags: [],
     specialty: acf.specialty || '',
     experience: acf.experience || '',
-    about: acf.about || description
+    about: acf.about || description,
+    
+    // New mappings
+    organ: acf.organ || '',
+    condition: acf.condition || '',
+    risk_factor: acf.risk_factor || ''
   };
 };
 
@@ -243,13 +248,26 @@ export const useStore = create<AppState>()(
       },
       removeCoupon: () => set({ appliedCoupon: null }),
       getCartTotal: () => {
-        const { cart, appliedCoupon } = get();
+        const { cart, appliedCoupon, user } = get();
         const subtotal = cart.reduce((sum, item) => sum + item.selectedCenter.price, 0);
+        
+        // Calculate Home Collection Fee
+        // Rule: 100 Rs for tests/packages, not for scans.
+        let homeCollectionCharges = 0;
+        const hasLabTests = cart.some(item => item.type === 'test' || item.type === 'package');
+        
+        if (user.serviceType === 'home' && hasLabTests) {
+            homeCollectionCharges = 100;
+        }
+
         let discount = 0;
         if (appliedCoupon) {
           discount = appliedCoupon.discountType === 'percent' ? (subtotal * appliedCoupon.value) / 100 : appliedCoupon.value;
         }
-        return { subtotal, discount, finalTotal: Math.max(0, subtotal - discount) };
+        
+        const finalTotal = Math.max(0, subtotal - discount + homeCollectionCharges);
+        
+        return { subtotal, discount, homeCollectionCharges, finalTotal };
       }
     }),
     {
